@@ -22,7 +22,7 @@ VECTORSTORE_PATH = os.getenv("VECTORSTORE_PATH", "data/vectorstore")
 
 # Extensions de fichiers qu'on analyse (semaine 1 : Python seulement,
 # tu pourras étendre cette liste plus tard)
-SUPPORTED_EXTENSIONS = {".py"}
+SUPPORTED_EXTENSIONS = {".py", ".js"}
 
 # Dossiers/fichiers à ignorer pendant l'ingestion
 IGNORED_DIRS = {
