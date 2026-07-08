@@ -1,0 +1,18 @@
+# LLM
+groq==0.11.0
+
+# Embeddings (local, pas d'API externe nécessaire)
+sentence-transformers==3.1.1
+
+# Vector store
+chromadb==0.5.15
+
+# Utilitaires
+python-dotenv==1.0.1
+pydantic==2.9.2
+
+# CLI
+click==8.1.7
+
+# Tests
+pytest==8.3.3
