@@ -7,7 +7,21 @@ from backend.rag.embeddings import embed_text
  
 _client = chromadb.PersistentClient(path=VECTORSTORE_PATH)
 _collection = _client.get_or_create_collection("code_chunks")
- 
+def reset_collection() -> None:
+    """
+    Supprime et recrée la collection Chroma.
+
+    Nécessaire avant chaque nouvelle ingestion (mono-utilisateur) pour
+    éviter de mélanger les chunks de deux projets différents. Réassigne
+    la variable globale _collection -- sinon store_chunks()/search()
+    continueraient d'utiliser une référence vers une collection supprimée.
+    """
+    global _collection
+    try:
+        _client.delete_collection("code_chunks")
+    except Exception:
+        pass
+    _collection = _client.get_or_create_collection("code_chunks")
  
 def store_chunks(chunks: list[dict]) -> None:
     """

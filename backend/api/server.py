@@ -1,0 +1,105 @@
+"""
+Serveur FastAPI -- expose les mêmes fonctions que le CLI, via HTTP.
+Aucune logique métier ici : ce fichier ne fait que router les requêtes
+vers les fonctions déjà testées (backend/assistant/*, backend/rag/*).
+"""
+
+import shutil
+import tempfile
+from pathlib import Path
+
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
+from backend.ingestion.loader import extract_project, scan_project
+from backend.rag.chunker import chunk_project
+from backend.rag.embeddings import embed_chunks
+from backend.rag.vectorstore import store_chunks, reset_collection
+
+from backend.assistant.explain import explain as explain_fn
+from backend.assistant.search import search as search_fn
+from backend.assistant.overview import overview as overview_fn
+from backend.assistant.doc_generator import generate_doc
+from backend.assistant.recommend import recommend as recommend_fn
+
+app = FastAPI(title="AI Developer Assistant")
+
+# Autorise le frontend React (Vite, port 5173 par défaut) à appeler cette API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+class QuestionRequest(BaseModel):
+    question: str
+    top_k: int = 5
+
+
+
+
+@app.post("/ingest")
+async def ingest(file: UploadFile = File(...)):
+    """Reçoit un zip, l'ingère entièrement : parse, chunk, embed, stocke."""
+    if not file.filename.endswith(".zip"):
+        raise HTTPException(400, "Seuls les fichiers .zip sont acceptés.")
+
+    tmp_dir = tempfile.mkdtemp()
+    zip_path = Path(tmp_dir) / file.filename
+
+    with open(zip_path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    try:
+        extract_dest = Path(tmp_dir) / "extracted"
+        project_path = extract_project(str(zip_path), str(extract_dest))
+        files_info = scan_project(project_path)
+
+        if not files_info:
+            raise HTTPException(400, "Aucun fichier .py/.js supporté trouvé dans le zip.")
+
+        reset_collection()
+
+        chunks = chunk_project(files_info)
+        chunks = embed_chunks(chunks)
+        store_chunks(chunks)
+
+        return {
+            "files_found": len(files_info),
+            "chunks_created": len(chunks),
+        }
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
+
+@app.post("/explain")
+def explain(req: QuestionRequest):
+    return {"result": explain_fn(req.question, top_k=req.top_k)}
+
+
+@app.post("/search")
+def search(req: QuestionRequest):
+    return {"result": search_fn(req.question, top_k=req.top_k)}
+
+
+@app.post("/doc")
+def doc(req: QuestionRequest):
+    return {"result": generate_doc(req.question, top_k=req.top_k)}
+
+
+@app.post("/recommend")
+def recommend(req: QuestionRequest):
+    return {"result": recommend_fn(req.question, top_k=req.top_k)}
+
+
+@app.get("/overview")
+def overview():
+    return {"result": overview_fn()}
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
