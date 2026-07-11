@@ -1,5 +1,5 @@
 """
-Embeddings — Semaine 2, Jour 2.
+Embeddings .
 
 Rôle de ce module :
 Transformer du texte (ici, le code d'un chunk) en un vecteur

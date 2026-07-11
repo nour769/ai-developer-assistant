@@ -1,13 +1,12 @@
 """
-Parsing AST — Jour 4-5 de la semaine 1.
+Parsing AST 
 
 Rôle de ce module :
 Au lieu de traiter le code comme du texte brut, on le parse avec le
 module `ast` (Abstract Syntax Tree) natif de Python pour en extraire
 la STRUCTURE : fonctions, classes, imports, avec leur code source exact.
 
-C'est cette étape qui rend le chunking "intelligent" possible en
-semaine 2 : on va découper le code par fonction/classe, pas par un
+C'est cette étape qui rend le chunking "intelligent" on va découper le code par fonction/classe, pas par un
 nombre arbitraire de caractères.
 """
 

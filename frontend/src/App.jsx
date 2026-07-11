@@ -13,12 +13,30 @@ import {
 const FEATURES = [
   { id: "explain", label: "Expliquer", icon: "→", needsQuestion: true },
   { id: "search", label: "Rechercher", icon: "◎", needsQuestion: true },
-  { id: "doc", label: "Documenter", icon: "¶", needsQuestion: true },
-  { id: "recommend", label: "Analyser", icon: "!", needsQuestion: true },
+  { id: "doc", label: "Documenter", icon: "¶", needsQuestion: false },
+  { id: "recommend", label: "Analyser", icon: "!", needsQuestion: false },
   { id: "overview", label: "Vue d'ensemble", icon: "▤", needsQuestion: false },
 ];
 
 const HANDLERS = { explain, search, doc: generateDoc, recommend };
+
+// Requête envoyée par défaut pour les fonctionnalités "one-click" qui
+// s'appuient sur generateDoc()/recommend() -- ces deux fonctions backend
+// attendent toujours une "question" pour faire leur retrieval, donc on en
+// fournit une par défaut qui cible l'ensemble du projet plutôt que
+// d'obliger l'utilisateur à taper quelque chose.
+const DEFAULT_QUERIES = {
+  doc: "Documente l'ensemble du projet.",
+  recommend: "Analyse l'ensemble du projet et propose des recommandations d'amélioration (optimisation, bonnes pratiques, vulnérabilités).",
+};
+
+// Libellé du bouton "one-click" affiché dans le panneau principal pour
+// chaque fonctionnalité qui n'a pas besoin de saisie utilisateur.
+const ONE_CLICK_LABELS = {
+  overview: "Générer la vue d'ensemble",
+  doc: "Générer la documentation du projet",
+  recommend: "Lancer l'analyse du projet",
+};
 
 export default function App() {
   const [uploadStatus, setUploadStatus] = useState(null);
@@ -39,24 +57,51 @@ export default function App() {
     }
   };
 
-  const runFeature = async () => {
-    const feature = FEATURES.find((f) => f.id === activeFeature);
-    if (feature.needsQuestion && !question.trim()) return;
-
+  // Exécute une fonctionnalité donnée avec une question donnée.
+  // Séparé de runFeature() pour pouvoir être appelé directement au clic
+  // sur un bouton de la sidebar (features one-click), sans attendre un
+  // second clic sur "Lancer".
+  const executeFeature = async (featureId, questionValue) => {
     setLoading(true);
     setError(null);
     setResult(null);
 
     try {
       const data =
-        activeFeature === "overview"
+        featureId === "overview"
           ? await getOverview()
-          : await HANDLERS[activeFeature](question);
+          : await HANDLERS[featureId](questionValue);
       setResult(data.result);
     } catch (e) {
       setError(e.message || "Une erreur est survenue.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Appelé par le bouton "Lancer" du panneau principal pour explain/search
+  // (features qui nécessitent une saisie utilisateur).
+  const runFeature = () => {
+    const feature = FEATURES.find((f) => f.id === activeFeature);
+    if (feature.needsQuestion && !question.trim()) return;
+
+    const effectiveQuestion = feature.needsQuestion
+      ? question
+      : DEFAULT_QUERIES[activeFeature];
+
+    executeFeature(activeFeature, effectiveQuestion);
+  };
+
+  // Appelé directement au clic sur un bouton de la sidebar.
+  const handleNavClick = (feature) => {
+    setActiveFeature(feature.id);
+    setResult(null);
+    setError(null);
+
+    // Overview, Doc et Recommend s'exécutent immédiatement au clic,
+    // sans attendre de saisie utilisateur.
+    if (!feature.needsQuestion) {
+      executeFeature(feature.id, DEFAULT_QUERIES[feature.id]);
     }
   };
 
@@ -78,11 +123,7 @@ export default function App() {
             <button
               key={f.id}
               className={`feature-btn ${activeFeature === f.id ? "active" : ""}`}
-              onClick={() => {
-                setActiveFeature(f.id);
-                setResult(null);
-                setError(null);
-              }}
+              onClick={() => handleNavClick(f)}
             >
               <span className="icon">{f.icon}</span>
               {f.label}
@@ -113,8 +154,12 @@ export default function App() {
 
         {!currentFeature.needsQuestion && (
           <div className="query-bar">
-            <button className="query-submit" onClick={runFeature} disabled={loading}>
-              Générer la vue d'ensemble
+            <button
+              className="query-submit"
+              onClick={() => executeFeature(activeFeature, DEFAULT_QUERIES[activeFeature])}
+              disabled={loading}
+            >
+              {ONE_CLICK_LABELS[activeFeature]}
             </button>
           </div>
         )}
@@ -134,8 +179,6 @@ function placeholderFor(feature) {
   const map = {
     explain: "Que fait la fonction login ?",
     search: "vérification des identifiants",
-    doc: "documente check_credentials",
-    recommend: "auth.py",
   };
   return map[feature] || "Pose ta question…";
 }
