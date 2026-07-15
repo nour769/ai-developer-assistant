@@ -8,6 +8,7 @@ Pourquoi isoler ça dans une seule fonction ?
   directement.
 """
 
+import time
 from groq import Groq
 from backend.config import GROQ_API_KEY, GROQ_MODEL
 
@@ -20,15 +21,30 @@ def call_llm(prompt: str, system_prompt: str = "", temperature: float = 0.2) -> 
 
     temperature basse (0.2) car on veut des réponses factuelles et
     stables sur du code, pas de la créativité.
+    
+    Implémente retry avec backoff exponentiel pour gérer les rate limits.
     """
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
 
-    response = _client.chat.completions.create(
-        model=GROQ_MODEL,
-        messages=messages,
-        temperature=temperature,
-    )
-    return response.choices[0].message.content
+    max_retries = 5
+    for attempt in range(max_retries):
+        try:
+            response = _client.chat.completions.create(
+                model=GROQ_MODEL,
+                messages=messages,
+                temperature=temperature,
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            error_str = str(e)
+            is_rate_limit = "rate limit" in error_str.lower() or "429" in error_str
+            
+            if is_rate_limit and attempt < max_retries - 1:
+                wait_time = 3 * (2 ** attempt)
+                print(f"⏳ Rate limit. Retry dans {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                raise

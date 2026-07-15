@@ -14,7 +14,7 @@ d'inventer un problème qui n'existe pas. Ne fais AUCUNE supposition hors de ce 
 visible dans le code fourni. Réponds en français, structuré par les 3 axes ci-dessus."""
  
  
-def recommend(question: str, top_k: int = 3) -> str:
+def recommend(question: str, top_k: int = 20) -> str:
     """
     Analyse le code correspondant à la question et retourne des
     recommandations sur les 3 axes.

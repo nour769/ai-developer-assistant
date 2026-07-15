@@ -4,21 +4,20 @@ import ResultPanel from "./components/ResultPanel.jsx";
 import {
   ingestProject,
   explain,
-  search,
   generateDoc,
   recommend,
   getOverview,
+  downloadReadme,
 } from "./api.js";
 
 const FEATURES = [
-  { id: "explain", label: "Expliquer", icon: "→", needsQuestion: true },
-  { id: "search", label: "Rechercher", icon: "◎", needsQuestion: true },
-  { id: "doc", label: "Documenter", icon: "¶", needsQuestion: false },
-  { id: "recommend", label: "Analyser", icon: "!", needsQuestion: false },
-  { id: "overview", label: "Vue d'ensemble", icon: "▤", needsQuestion: false },
+  { id: "explain", label: "Expliquer", icon: "→", needsQuestion: true, category: "Analyse" },
+  { id: "doc", label: "Documenter", icon: "¶", needsQuestion: false, category: "Génération" },
+  { id: "recommend", label: "Recommander", icon: "!", needsQuestion: false, category: "Génération" },
+  { id: "overview", label: "Vue d'ensemble", icon: "▤", needsQuestion: false, category: "Génération" },
 ];
 
-const HANDLERS = { explain, search, doc: generateDoc, recommend };
+const HANDLERS = { explain, doc: generateDoc, recommend };
 
 // Requête envoyée par défaut pour les fonctionnalités "one-click" qui
 // s'appuient sur generateDoc()/recommend() -- ces deux fonctions backend
@@ -34,7 +33,7 @@ const DEFAULT_QUERIES = {
 // chaque fonctionnalité qui n'a pas besoin de saisie utilisateur.
 const ONE_CLICK_LABELS = {
   overview: "Générer la vue d'ensemble",
-  doc: "Générer la documentation du projet",
+  doc: "Télécharger la documentation",
   recommend: "Lancer l'analyse du projet",
 };
 
@@ -67,11 +66,17 @@ export default function App() {
     setResult(null);
 
     try {
-      const data =
-        featureId === "overview"
-          ? await getOverview()
-          : await HANDLERS[featureId](questionValue);
-      setResult(data.result);
+      if (featureId === "doc") {
+        // Télécharge le README au lieu de l'afficher
+        await downloadReadme();
+        setResult("✓ Documentation téléchargée avec succès !");
+      } else if (featureId === "overview") {
+        const data = await getOverview();
+        setResult(data.result);
+      } else {
+        const data = await HANDLERS[featureId](questionValue);
+        setResult(data.result);
+      }
     } catch (e) {
       setError(e.message || "Une erreur est survenue.");
     } finally {
@@ -178,7 +183,6 @@ export default function App() {
 function placeholderFor(feature) {
   const map = {
     explain: "Que fait la fonction login ?",
-    search: "vérification des identifiants",
   };
   return map[feature] || "Pose ta question…";
 }

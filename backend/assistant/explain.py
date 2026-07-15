@@ -20,7 +20,7 @@ Règles de format de sortie (respect strict) :
 Réponds en français, de manière concise et structurée pour un développeur qui découvre ce code."""
  
  
-def explain(question: str, top_k: int = 5) -> str:
+def explain(question: str, top_k: int = 20) -> str:
     """
     Explique un bout de code en langage naturel.
  

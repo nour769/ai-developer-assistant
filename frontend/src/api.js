@@ -38,3 +38,18 @@ export async function getOverview() {
   if (!res.ok) throw new Error("Erreur overview");
   return res.json();
 }
+
+export async function downloadReadme() {
+  const res = await fetch(`${BASE_URL}/readme/download`);
+  if (!res.ok) throw new Error("Erreur téléchargement README");
+  
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "PROJECT_README.md";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+}

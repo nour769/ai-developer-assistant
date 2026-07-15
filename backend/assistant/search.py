@@ -13,7 +13,7 @@ des résultats de code par rapport à la question. Si aucun résultat n'est pert
 et arrête-toi là -- ne fournis aucune information supplémentaire hors du code fourni."""
  
  
-def search(question: str, top_k: int = 5) -> str:
+def search(question: str, top_k: int = 20) -> str:
     """
     Recherche naturelle dans le projet.
  

@@ -17,7 +17,7 @@ Règles de sortie :
 Rédige les descriptions en français, mais garde la syntaxe standard de docstring/JSDoc."""
  
  
-def generate_doc(question: str, top_k: int = 5) -> str:
+def generate_doc(question: str, top_k: int = 20) -> str:
     """
     Génère la documentation pour le code correspondant à la demande.
     """
