@@ -51,9 +51,11 @@ def format_context(matches: list[dict]) -> str:
     blocks = []
     for match in matches:
         meta = match["metadata"]
-        header = f"# Fichier: {meta['file']} -- {meta['type']} `{meta['name']}` (ligne {meta['lineno']})"
+        dist = match.get("distance")
+        dist_str = f" (distance={dist:.3f})" if dist is not None else ""
+        header = f"# Fichier: {meta['file']} -- {meta['type']} `{meta['name']}` (ligne {meta['lineno']}){dist_str}"
         blocks.append(f"{header}\n{match['code']}")
- 
+
     return "\n\n".join(blocks)
  
  

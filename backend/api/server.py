@@ -61,13 +61,15 @@ async def ingest(file: UploadFile = File(...)):
         if not files_info:
             raise HTTPException(400, "Aucun fichier .py/.js supporté trouvé dans le zip.")
 
-        reset_collection()
+        # Crée une nouvelle collection dédiée à ce projet et récupère son id
+        project_id = reset_collection()
 
         chunks = chunk_project(files_info)
         chunks = embed_chunks(chunks)
         store_chunks(chunks)
 
         return {
+            "project_id": project_id,
             "files_found": len(files_info),
             "chunks_created": len(chunks),
         }

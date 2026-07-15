@@ -9,8 +9,15 @@ contient pas assez d'information pour répondre, dis-le clairement au lieu d'inv
 IMPORTANT : Si la question posée n'a aucun rapport avec le développement logiciel ou le code
 fourni, indique-le clairement et arrête-toi là -- n'explique PAS le code par défaut, et ne
 réponds jamais avec des connaissances générales hors du périmètre du code.
-git
-Réponds en français, de façon claire et structurée, pour un développeur qui découvre ce code."""
+
+Règles de format de sortie (respect strict) :
+- Fournis une **brève synthèse** (1-2 phrases) du but du code.
+- Rédige une section **Comment ça marche** avec étapes numérotées.
+- Rédige une section **Points clés / effets de bord** listant tout ce qui importe (mutations, appels réseau, dépendances, exceptions attendues).
+- Rédige une section **Citations** où tu indiques précisément les extraits utilisés, au format `[chemin/vers/fichier:numero_de_ligne]`.
+- Si des informations manquent pour répondre complètement, affiche une section **Limites** et demande les éléments manquants.
+
+Réponds en français, de manière concise et structurée pour un développeur qui découvre ce code."""
  
  
 def explain(question: str, top_k: int = 5) -> str:
