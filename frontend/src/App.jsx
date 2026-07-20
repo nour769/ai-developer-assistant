@@ -8,6 +8,7 @@ import {
   recommend,
   getOverview,
   downloadReadme,
+  deployment,
 } from "./api.js";
 
 const FEATURES = [
@@ -15,9 +16,10 @@ const FEATURES = [
   { id: "doc", label: "Documenter", icon: "¶", needsQuestion: false, category: "Génération" },
   { id: "recommend", label: "Recommander", icon: "!", needsQuestion: false, category: "Génération" },
   { id: "overview", label: "Vue d'ensemble", icon: "▤", needsQuestion: false, category: "Génération" },
+  { id: "deployment", label: "Architecture", icon: "⚙", needsQuestion: false, category: "Déploiement", hasParams: true },
 ];
 
-const HANDLERS = { explain, doc: generateDoc, recommend };
+const HANDLERS = { explain, doc: generateDoc, recommend, deployment };
 
 // Requête envoyée par défaut pour les fonctionnalités "one-click" qui
 // s'appuient sur generateDoc()/recommend() -- ces deux fonctions backend
@@ -44,6 +46,11 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
+  
+  // Paramètres pour deployment
+  const [deployService, setDeployService] = useState("AWS");
+  const [deployUsage, setDeployUsage] = useState("small");
+  const [deployProjectName, setDeployProjectName] = useState("Mon Projet");
 
   const handleUpload = async (file) => {
     setUploadStatus({ state: "loading" });
@@ -51,6 +58,7 @@ export default function App() {
     try {
       const data = await ingestProject(file);
       setUploadStatus({ state: "success", ...data });
+      setDeployProjectName(file.name.replace(".zip", ""));
     } catch (e) {
       setUploadStatus({ state: "error", message: e.message });
     }
@@ -72,6 +80,9 @@ export default function App() {
         setResult("✓ Documentation téléchargée avec succès !");
       } else if (featureId === "overview") {
         const data = await getOverview();
+        setResult(data.result);
+      } else if (featureId === "deployment") {
+        const data = await deployment(deployProjectName, deployService, deployUsage);
         setResult(data.result);
       } else {
         const data = await HANDLERS[featureId](questionValue);
@@ -116,8 +127,15 @@ export default function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <span className="brand-dot" />
-          AI Developer Assistant
+          <svg width="50" height="40" viewBox="0 0 100 80" style={{ marginRight: '8px' }}>
+            {/* Triangle jaune EY */}
+            <polygon points="20,10 60,10 20,50" fill="#ffed00" />
+            {/* Texte EY */}
+            <text x="20" y="68" fontFamily="Arial, sans-serif" fontSize="48" fontWeight="900" fill="white">EY</text>
+          </svg>
+        </div>
+        <div style={{ fontSize: '11px', color: '#999999', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+          Shape the future
         </div>
 
         <UploadZone onUpload={handleUpload} status={uploadStatus} />
@@ -157,7 +175,34 @@ export default function App() {
           </div>
         )}
 
-        {!currentFeature.needsQuestion && (
+        {currentFeature.id === "deployment" && (
+          <div className="query-bar deployment-params">
+            <div className="param-group">
+              <label>Service Cloud:</label>
+              <select value={deployService} onChange={(e) => setDeployService(e.target.value)}>
+                <option value="AWS">AWS</option>
+                <option value="Azure">Azure</option>
+                <option value="Private">Serveur Privé</option>
+              </select>
+            </div>
+            <div className="param-group">
+              <label>Volume d'usage:</label>
+              <select value={deployUsage} onChange={(e) => setDeployUsage(e.target.value)}>
+                <option value="small">Petit (&lt; 1k req/day)</option>
+                <option value="huge">Énorme (&gt; 100k req/day)</option>
+              </select>
+            </div>
+            <button
+              className="query-submit"
+              onClick={() => executeFeature("deployment", "")}
+              disabled={loading}
+            >
+              Générer l'architecture
+            </button>
+          </div>
+        )}
+
+        {!currentFeature.needsQuestion && activeFeature !== "deployment" && (
           <div className="query-bar">
             <button
               className="query-submit"

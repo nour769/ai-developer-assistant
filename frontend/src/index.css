@@ -1,17 +1,15 @@
 :root {
-  /* Palette : thème "terminal", pensé pour un outil d'analyse de code */
-  --bg: #0f1117;
-  --surface: #171a23;
-  --surface-hover: #1f232f;
-  --border: #262b3a;
-  --text: #e7e9f2;
-  --text-muted: #8b90a8;
-  --accent-mint: #4fd6b8;      /* succès / code compris */
-  --accent-mint-dim: rgba(79, 214, 184, 0.12);
-  --accent-amber: #f0a94e;     /* alertes / vulnérabilités */
-  --accent-amber-dim: rgba(240, 169, 78, 0.12);
-  --accent-lang-py: #6aa8ff;
-  --accent-lang-js: #f3d34a;
+  /* Palette EY - Jaune et noir */
+  --bg: #000000;
+  --surface: #1a1a1a;
+  --surface-hover: #262626;
+  --border: #333333;
+  --text: #ffffff;
+  --text-muted: #999999;
+  
+  /* EY Brand Colors */
+  --accent-yellow: #ffed00;    /* Jaune vif EY */
+  --accent-yellow-dim: rgba(255, 237, 0, 0.12);
 
   --font-display: "JetBrains Mono", monospace;
   --font-body: "Inter", sans-serif;
@@ -37,8 +35,8 @@ body {
 
 /* ---------- Sidebar ---------- */
 .sidebar {
-  background: var(--surface);
-  border-right: 1px solid var(--border);
+  background: #000000;
+  border-right: 2px solid var(--accent-yellow);
   padding: 24px 20px;
   display: flex;
   flex-direction: column;
@@ -47,21 +45,23 @@ body {
 }
 
 .brand {
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-family: 'Courier New', monospace;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
   display: flex;
   align-items: center;
   gap: 8px;
+  color: var(--accent-yellow);
+  text-transform: uppercase;
 }
 
 .brand-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--accent-mint);
-  box-shadow: 0 0 8px var(--accent-mint);
+  background: var(--accent-yellow);
+  box-shadow: 0 0 12px var(--accent-yellow);
 }
 
 .upload-zone {
@@ -77,19 +77,19 @@ body {
 
 .upload-zone:hover,
 .upload-zone.dragging {
-  border-color: var(--accent-mint);
-  background: var(--accent-mint-dim);
+  border-color: var(--accent-yellow);
+  background: var(--accent-yellow-dim);
   color: var(--text);
 }
 
 .upload-zone.scanning {
-  border-color: var(--accent-mint);
+  border: 2px solid var(--accent-yellow);
   animation: pulse-border 1.4s ease-in-out infinite;
 }
 
 @keyframes pulse-border {
-  0%, 100% { box-shadow: 0 0 0 0 var(--accent-mint-dim); }
-  50% { box-shadow: 0 0 0 6px transparent; }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 237, 0, 0.3); }
+  50% { box-shadow: 0 0 0 8px transparent; }
 }
 
 .project-status {
@@ -101,7 +101,7 @@ body {
   border: 1px solid var(--border);
 }
 
-.project-status strong { color: var(--accent-mint); }
+.project-status strong { color: var(--accent-yellow); }
 
 .feature-nav {
   display: flex;
@@ -135,11 +135,13 @@ body {
   transition: background 0.12s ease, color 0.12s ease;
 }
 
-.feature-btn:hover { background: var(--surface-hover); color: var(--text); }
+.feature-btn:hover { background: var(--surface-hover); color: var(--accent-yellow); }
 
 .feature-btn.active {
-  background: var(--accent-mint-dim);
-  color: var(--accent-mint);
+  background: var(--accent-yellow-dim);
+  color: var(--accent-yellow);
+  border-left: 3px solid var(--accent-yellow);
+  padding-left: 9px;
 }
 
 .feature-btn .icon { font-family: var(--font-display); font-size: 13px; }
@@ -171,23 +173,25 @@ body {
 
 .query-input:focus {
   outline: none;
-  border-color: var(--accent-mint);
+  border-color: var(--accent-yellow);
+  box-shadow: 0 0 0 3px rgba(255, 255, 0, 0.1);
 }
 
 .query-submit {
-  background: var(--accent-mint);
-  color: #0f1117;
+  background: var(--accent-yellow);
+  color: #000000;
   border: none;
   border-radius: var(--radius);
   padding: 0 22px;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 14px;
   cursor: pointer;
-  transition: opacity 0.12s ease;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  box-shadow: 0 4px 12px rgba(255, 237, 0, 0.4);
 }
 
 .query-submit:disabled { opacity: 0.4; cursor: not-allowed; }
-.query-submit:not(:disabled):hover { opacity: 0.88; }
+.query-submit:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(255, 237, 0, 0.5); }
 
 .empty-state {
   margin: auto;
@@ -200,8 +204,8 @@ body {
 .empty-state .icon { font-size: 28px; margin-bottom: 12px; opacity: 0.6; }
 
 .result-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: #0a0a0a;
+  border: 1px solid var(--accent-yellow);
   border-radius: var(--radius);
   padding: 22px 26px;
   animation: fade-in 0.25s ease;
@@ -239,8 +243,9 @@ body {
 
 .loading-dot {
   width: 6px; height: 6px; border-radius: 50%;
-  background: var(--accent-mint);
+  background: var(--accent-yellow);
   animation: blink 1s infinite ease-in-out;
+  box-shadow: 0 0 8px var(--accent-yellow);
 }
 .loading-dot:nth-child(2) { animation-delay: 0.15s; }
 .loading-dot:nth-child(3) { animation-delay: 0.3s; }
@@ -258,17 +263,58 @@ body {
   font-size: 11.5px;
   padding: 3px 9px;
   border-radius: 6px;
-  background: var(--accent-mint-dim);
-  color: var(--accent-mint);
-  border: 1px solid rgba(79, 214, 184, 0.25);
+  background: var(--accent-yellow-dim);
+  color: var(--accent-yellow);
+  border: 1px solid rgba(255, 255, 0, 0.3);
 }
 
 .error-banner {
-  background: var(--accent-amber-dim);
-  border: 1px solid rgba(240, 169, 78, 0.3);
-  color: var(--accent-amber);
+  background: rgba(255, 100, 0, 0.1);
+  border: 1px solid rgba(255, 237, 0, 0.3);
+  color: var(--accent-yellow);
   padding: 12px 16px;
   border-radius: var(--radius);
   font-size: 13.5px;
   margin-bottom: 16px;
+}
+
+/* Deployment params */
+.deployment-params {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.param-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.param-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.param-group select {
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.param-group select:hover,
+.param-group select:focus {
+  border-color: var(--accent-yellow);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 237, 0, 0.1);
 }
