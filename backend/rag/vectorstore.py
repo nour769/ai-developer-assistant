@@ -65,11 +65,26 @@ def reset_collection() -> str:
 
 
 def set_active_collection(name: str) -> None:
-    """Force l'utilisation d'une collection existante (utile pour tests)."""
+    """
+    Charge une collection existante. Lève une exception si elle n'existe pas.
+    """
     global _collection, _collection_name
-    _collection = _client.get_or_create_collection(name)
-    _collection_name = name
-    _persist_active_collection_name(name)
+    try:
+        # get_collection() lève une exception si elle n'existe pas (contrairement à get_or_create)
+        _collection = _client.get_collection(name=name)
+        _collection_name = name
+        _persist_active_collection_name(name)
+    except Exception as e:
+        raise ValueError(f"❌ Collection '{name}' introuvable. Erreur: {str(e)}")
+
+
+def get_collection_count(name: str) -> int:
+    """Retourne le nombre de chunks dans une collection."""
+    try:
+        col = _client.get_collection(name=name)
+        return col.count()
+    except Exception:
+        return 0
 
 
 def get_active_collection_name() -> str:
@@ -101,10 +116,14 @@ def store_chunks(chunks: list[dict]) -> None:
     )
 
 
-def search(question: str, top_k: int = 5) -> list[dict]:
+def search(question: str, top_k: int = 5, max_distance: float = 0.9) -> list[dict]:
     """
     Transforme la question en embedding, puis retrouve les top_k
     chunks les plus proches dans la base vectorielle.
+
+    Filtre les résultats pour ne garder que ceux dont la distance
+    vectorielle est <= max_distance (0.9 = très proche, 1.0 = match parfait).
+    Si aucun résultat ne dépasse le seuil, retourne liste vide.
 
     Retourne une liste de dicts : {"code": ..., "metadata": ..., "distance": ...}
     """
@@ -117,11 +136,15 @@ def search(question: str, top_k: int = 5) -> list[dict]:
 
     matches = []
     for i in range(len(results["ids"][0])):
-        matches.append({
-            "code": results["documents"][0][i],
-            "metadata": results["metadatas"][0][i],
-            "distance": results["distances"][0][i],
-        })
+        distance = results["distances"][0][i]
+        
+        # Filtre par pertinence : ne garder que les résultats suffisamment proches
+        if distance <= max_distance:
+            matches.append({
+                "code": results["documents"][0][i],
+                "metadata": results["metadatas"][0][i],
+                "distance": distance,
+            })
 
     return matches
 

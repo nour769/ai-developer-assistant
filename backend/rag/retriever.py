@@ -14,9 +14,12 @@ vectorstore directement).
 """
  
 from backend.rag.vectorstore import search
+
+# Constante pour signaler l'absence de contexte pertinent
+AUCUN_CONTEXTE_PERTINENT = "AUCUN_CONTEXTE_PERTINENT"
  
  
-def retrieve_context(question: str, top_k: int = 5) -> list[dict]:
+def retrieve_context(question: str, top_k: int = 5, max_distance: float = 0.9) -> list[dict]:
     """
     Recherche les chunks les plus pertinents pour une question donnée.
  
@@ -25,7 +28,7 @@ def retrieve_context(question: str, top_k: int = 5) -> list[dict]:
     d'ajouter plus tard un filtrage ou un reranking ici, sans toucher
     au reste du code (assistant/*.py).
     """
-    return search(question, top_k=top_k)
+    return search(question, top_k=top_k, max_distance=max_distance)
  
  
 def format_context(matches: list[dict]) -> str:
@@ -46,7 +49,7 @@ def format_context(matches: list[dict]) -> str:
     vide sans référence au fichier source.
     """
     if not matches:
-        return "Aucun code pertinent trouvé dans le projet."
+        return AUCUN_CONTEXTE_PERTINENT
  
     blocks = []
     for match in matches:
@@ -59,13 +62,13 @@ def format_context(matches: list[dict]) -> str:
     return "\n\n".join(blocks)
  
  
-def retrieve_and_format(question: str, top_k: int = 5) -> str:
+def retrieve_and_format(question: str, top_k: int = 5, max_distance: float = 0.9) -> str:
     """
     Raccourci pratique : recherche + mise en forme en un seul appel.
     C'est cette fonction que les modules assistant/*.py utiliseront
     le plus souvent -- une question entre, un contexte texte sort.
     """
-    matches = retrieve_context(question, top_k=top_k)
+    matches = retrieve_context(question, top_k=top_k, max_distance=max_distance)
     return format_context(matches)
  
  

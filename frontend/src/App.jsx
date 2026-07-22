@@ -1,6 +1,7 @@
 import { useState } from "react";
 import UploadZone from "./components/UploadZone.jsx";
 import ResultPanel from "./components/ResultPanel.jsx";
+import ProjectHistory from "./components/ProjectHistory.jsx";
 import {
   ingestProject,
   explain,
@@ -46,6 +47,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
+  const [currentProjectId, setCurrentProjectId] = useState(null);
   
   // Paramètres pour deployment
   const [deployService, setDeployService] = useState("AWS");
@@ -59,9 +61,16 @@ export default function App() {
       const data = await ingestProject(file);
       setUploadStatus({ state: "success", ...data });
       setDeployProjectName(file.name.replace(".zip", ""));
+      setCurrentProjectId(data.db_project_id);
     } catch (e) {
       setUploadStatus({ state: "error", message: e.message });
     }
+  };
+
+  const handleProjectSelect = (projectId, message) => {
+    setCurrentProjectId(projectId);
+    setResult(`✓ ${message}`);
+    setQuestion("");
   };
 
   // Exécute une fonctionnalité donnée avec une question donnée.
@@ -139,6 +148,11 @@ export default function App() {
         </div>
 
         <UploadZone onUpload={handleUpload} status={uploadStatus} />
+
+        <ProjectHistory 
+          onProjectSelect={handleProjectSelect}
+          currentProjectId={currentProjectId}
+        />
 
         <nav className="feature-nav">
           <div className="feature-nav-label">Actions</div>

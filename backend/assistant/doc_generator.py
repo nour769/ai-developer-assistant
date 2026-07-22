@@ -1,6 +1,6 @@
 
 from backend.assistant.llm_client import call_llm
-from backend.rag.retriever import retrieve_and_format
+from backend.rag.retriever import retrieve_and_format, AUCUN_CONTEXTE_PERTINENT
  
 _SYSTEM_PROMPT = """Tu es un assistant qui génère de la documentation technique claire pour du code.
 On te donne un ou plusieurs extraits de code (fonctions/classes). Pour chacun, génère
@@ -14,14 +14,38 @@ Règles de sortie :
 - Ajoute un court **Exemple d'utilisation** si possible.
 - Cite la source en fin de réponse sous la forme `[chemin/vers/fichier:numero_de_ligne]`.
 
-Rédige les descriptions en français, mais garde la syntaxe standard de docstring/JSDoc."""
+✨ FORMATAGE FANCY POUR CODE:
+Quand tu mentionnes une FONCTION ou CLASS EXACTE, utilise un CADRE:
+
+┌────────────────────────────────┐
+│ **nom_fonction() / NomClass**  │
+│ [fichier:ligne]               │
+│ Signature et détails...        │
+└────────────────────────────────┘
+
+Rédige les descriptions en français, mais garde la syntaxe standard de docstring/JSDoc.
+
+IMPORTANT SUR LES CITATIONS :
+Ne répète pas la même citation [fichier:ligne] à chaque phrase si elle provient du même
+bloc de code déjà cité juste avant. Cite une source une fois par bloc de code distinct."""
  
  
 def generate_doc(question: str, top_k: int = 20) -> str:
     """
     Génère la documentation pour le code correspondant à la demande.
     """
+    # Validation : question non vide
+    if not question or not question.strip():
+        return "Merci de poser une question."
+    
     context = retrieve_and_format(question, top_k=top_k)
+    
+    # Vérification : contexte pertinent trouvé?
+    if context == AUCUN_CONTEXTE_PERTINENT:
+        return (
+            "Je n'ai trouvé aucun code pertinent dans le projet indexé pour répondre "
+            "à cette question. Reformule ta question ou vérifie qu'un projet a bien été ingéré."
+        )
  
     prompt = f"""Code à documenter :
  

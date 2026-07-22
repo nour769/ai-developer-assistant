@@ -23,6 +23,8 @@ def call_llm(prompt: str, system_prompt: str = "", temperature: float = 0.2) -> 
     stables sur du code, pas de la créativité.
     
     Implémente retry avec backoff exponentiel pour gérer les rate limits.
+    En cas d'erreur persistante, retourne un message clair au lieu de
+    lever l'exception (évite le crash de l'application).
     """
     messages = []
     if system_prompt:
@@ -47,4 +49,9 @@ def call_llm(prompt: str, system_prompt: str = "", temperature: float = 0.2) -> 
                 print(f"⏳ Rate limit. Retry dans {wait_time}s...")
                 time.sleep(wait_time)
             else:
-                raise
+                # Retourner un message clair au lieu de planter
+                return (
+                    "⚠️ Le service IA est temporairement indisponible "
+                    "(limite de requêtes atteinte ou problème réseau). "
+                    "Réessaie dans quelques instants."
+                )

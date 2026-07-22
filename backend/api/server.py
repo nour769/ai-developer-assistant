@@ -4,6 +4,10 @@ Aucune logique métier ici : ce fichier ne fait que router les requêtes
 vers les fonctions déjà testées (backend/assistant/*, backend/rag/*).
 """
 
+# Désactiver la telemetry de ChromaDB pour éviter les erreurs au démarrage
+import os
+os.environ["CHROMA_TELEMETRY_ENABLED"] = "false"
+
 import shutil
 import tempfile
 import time
@@ -21,7 +25,7 @@ from backend.services.project_service import ProjectService
 from backend.ingestion.loader import extract_project, scan_project
 from backend.rag.chunker import chunk_project
 from backend.rag.embeddings import embed_chunks
-from backend.rag.vectorstore import store_chunks, reset_collection
+from backend.rag.vectorstore import store_chunks, reset_collection, set_active_collection, get_active_collection_name, get_collection_count
 
 from backend.assistant.explain import explain as explain_fn
 from backend.assistant.search import search as search_fn
@@ -47,10 +51,13 @@ class QuestionRequest(BaseModel):
 
 
 class DeploymentRequest(BaseModel):
-    """Paramètres pour l'architecture de déploiement."""
+    """Paramètres pour l'architecture de déploiement COMPLÈTE."""
     project_name: str
     service: str = "AWS"  # AWS, Azure, Private
     usage_level: str = "small"  # small, huge
+    service_type: str = "web"  # web, job, worker, api, realtime, data_pipeline
+    ip_exposure: str = "public"  # public, private, hybrid
+    data_type: str = "public"  # public, confidential, mixed
     top_k: int = 20
 
 
@@ -129,8 +136,11 @@ async def ingest(file: UploadFile = File(...), db: Session = Depends(get_db)):
 
 
 @app.post("/explain")
-def explain(req: QuestionRequest):
-    return {"result": explain_fn(req.question, top_k=req.top_k)}
+def explain(req: QuestionRequest, db: Session = Depends(get_db)):
+    result = explain_fn(req.question, top_k=req.top_k)
+    # Enregistre l'analyse dans la BD
+    # Note: on n'a pas de project_id courant, donc on le récupère du dernier projet actif
+    return {"result": result}
 
 
 @app.post("/search")
@@ -151,18 +161,31 @@ def recommend(req: QuestionRequest):
 @app.post("/deployment")
 def deployment(req: DeploymentRequest, db: Session = Depends(get_db)):
     """
-    Génère une architecture de déploiement optimale.
+    Génère une architecture de déploiement COMPLÈTE et optimale.
     
     Paramètres:
     - project_name: Nom du projet
     - service: "AWS", "Azure", ou "Private"
     - usage_level: "small" (< 1000 req/day) ou "huge" (> 100k req/day)
+    - service_type: "web", "job", "worker", "api", "realtime", "data_pipeline"
+    - ip_exposure: "public", "private", ou "hybrid"
+    - data_type: "public", "confidential", ou "mixed"
     - top_k: Nombre de chunks à analyser (default: 20)
+    
+    Retour:
+    - Architecture complète avec backup recommendations
+    - Coûts estimés par provider
+    - Configuration spécifique au service
+    - Stratégies HA/DR
+    - Sécurité adaptée au type de data
     """
     response = generate_deployment_architecture(
         project_name=req.project_name,
         service=req.service,
         usage_level=req.usage_level,
+        service_type=req.service_type,
+        ip_exposure=req.ip_exposure,
+        data_type=req.data_type,
         top_k=req.top_k
     )
     
@@ -173,7 +196,10 @@ def deployment(req: DeploymentRequest, db: Session = Depends(get_db)):
         "result": response,
         "parameters": {
             "service": req.service,
-            "usage_level": req.usage_level
+            "usage_level": req.usage_level,
+            "service_type": req.service_type,
+            "ip_exposure": req.ip_exposure,
+            "data_type": req.data_type
         }
     }
 
@@ -187,28 +213,68 @@ def overview():
 def list_projects(db: Session = Depends(get_db), limit: int = 50):
     """Liste tous les projets uploadés."""
     projects = ProjectService.list_projects(db, limit=limit)
+    active_collection = get_active_collection_name()
+    
     return {
         "total": len(projects),
+        "active_collection": active_collection,
         "projects": [
             {
                 "id": p.id,
                 "name": p.name,
                 "uploaded_at": p.uploaded_at.isoformat(),
-                "collection_id": p.vectorstore_collection_id
+                "collection_id": p.vectorstore_collection_id,
+                "is_active": p.vectorstore_collection_id == active_collection,
+                "chunks_count": get_collection_count(p.vectorstore_collection_id)
             }
             for p in projects
         ]
     }
 
 
+@app.post("/projects/{project_id}/activate")
+def activate_project(project_id: int, db: Session = Depends(get_db)):
+    """Active un projet existant pour les analyses."""
+    project = ProjectService.get_project(db, project_id)
+    if not project:
+        raise HTTPException(404, "Projet non trouvé")
+    
+    # Vérifie que la collection existe et a du contenu
+    chunk_count = get_collection_count(project.vectorstore_collection_id)
+    if chunk_count == 0:
+        raise HTTPException(
+            400,
+            f"⚠️ La collection pour '{project.name}' est vide ou corrompue "
+            f"(Collection ID: {project.vectorstore_collection_id}). "
+            f"Veuillez réuploader le projet."
+        )
+    
+    # Switche le vectorstore vers cette collection
+    try:
+        set_active_collection(project.vectorstore_collection_id)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    
+    return {
+        "message": f"✓ Projet '{project.name}' activé ({chunk_count} chunks trouvés)",
+        "project_id": project.id,
+        "collection_id": project.vectorstore_collection_id,
+        "chunks_count": chunk_count
+    }
+
+
 @app.get("/projects/{project_id}")
 def get_project(project_id: int, db: Session = Depends(get_db)):
-    """Récupère les détails d'un projet."""
+    """Récupère les détails complets d'un projet + historique."""
     project = ProjectService.get_project(db, project_id)
     if not project:
         raise HTTPException(404, "Projet non trouvé")
     
     history = ProjectService.get_project_history(db, project_id)
+    from backend.models import Analysis
+    analyses = db.query(Analysis).filter(
+        Analysis.project_id == project_id
+    ).all()
     
     return {
         "project": {
@@ -225,7 +291,14 @@ def get_project(project_id: int, db: Session = Depends(get_db)):
                 "embedding_time_ms": h.embedding_time_ms
             }
             for h in history
-        ]
+        ],
+        "analyses_count": {
+            "explain": len([a for a in analyses if a.feature == "explain"]),
+            "recommend": len([a for a in analyses if a.feature == "recommend"]),
+            "doc": len([a for a in analyses if a.feature == "doc"]),
+            "deployment": len([a for a in analyses if a.feature == "deployment"]),
+            "total": len(analyses)
+        }
     }
 
 

@@ -1,0 +1,204 @@
+.project-history-container {
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 16px;
+  margin: 0 0 16px 0;
+  border: 1.5px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.project-history-container h3 {
+  margin: 0;
+  font-size: 11px;
+  color: var(--accent-yellow);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font-display);
+}
+
+.projects-list {
+  max-height: 280px;
+  overflow-y: auto;
+  border-radius: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.project-item {
+  border-bottom: 1px solid var(--border);
+  transition: all 0.15s ease;
+}
+
+.project-item:last-child {
+  border-bottom: none;
+}
+
+.project-item.active {
+  background: var(--accent-yellow-dim);
+  border-left: 3px solid var(--accent-yellow);
+}
+
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.project-header:hover {
+  background-color: var(--surface-hover);
+}
+
+.project-item.active .project-header:hover {
+  background-color: rgba(255, 237, 0, 0.08);
+}
+
+.project-name-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.active-badge {
+  display: inline-block;
+  background: var(--accent-yellow);
+  color: #000;
+  font-size: 9px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-weight: 700;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  letter-spacing: 0.05em;
+}
+
+.project-name {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-date {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.activate-btn {
+  padding: 6px 10px;
+  background: var(--accent-yellow);
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.activate-btn:hover:not(:disabled) {
+  background: #ffed00;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 237, 0, 0.25);
+}
+
+.activate-btn:disabled {
+  background: var(--border);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.project-details {
+  padding: 0 12px 12px 12px;
+  background: var(--bg);
+  font-size: 10px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  font-family: var(--font-display);
+}
+
+.project-details p {
+  margin: 6px 0;
+  word-break: break-word;
+}
+
+.project-details strong {
+  color: var(--accent-yellow);
+}
+
+.refresh-btn {
+  width: 100%;
+  padding: 8px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-display);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.refresh-btn:hover {
+  background: var(--surface);
+  border-color: var(--accent-yellow);
+  color: var(--accent-yellow);
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 16px 12px;
+  font-size: 11px;
+  font-style: italic;
+}
+
+.error-message {
+  background: rgba(255, 237, 0, 0.1);
+  color: var(--accent-yellow);
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  border: 1px solid var(--border);
+  font-family: var(--font-display);
+}
+
+/* Scrollbar styling */
+.projects-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.projects-list::-webkit-scrollbar-track {
+  background: var(--bg);
+  border-radius: 3px;
+}
+
+.projects-list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.projects-list::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-yellow-dim);
+}
