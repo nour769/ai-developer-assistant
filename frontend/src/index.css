@@ -45,15 +45,16 @@ body {
 }
 
 .brand {
-  font-family: 'Courier New', monospace;
-  font-size: 24px;
-  font-weight: 900;
-  letter-spacing: 0.05em;
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: var(--accent-yellow);
-  text-transform: uppercase;
+  justify-content: flex-start;
+  gap: 0;
+}
+
+.ey-logo {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
 }
 
 .brand-dot {

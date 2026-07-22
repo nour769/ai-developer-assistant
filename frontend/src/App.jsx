@@ -136,15 +136,7 @@ export default function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <svg width="50" height="40" viewBox="0 0 100 80" style={{ marginRight: '8px' }}>
-            {/* Triangle jaune EY */}
-            <polygon points="20,10 60,10 20,50" fill="#ffed00" />
-            {/* Texte EY */}
-            <text x="20" y="68" fontFamily="Arial, sans-serif" fontSize="48" fontWeight="900" fill="white">EY</text>
-          </svg>
-        </div>
-        <div style={{ fontSize: '11px', color: '#999999', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-          Shape the future
+          <img src="/ey-logo.png" alt="EY Logo" className="ey-logo" />
         </div>
 
         <UploadZone onUpload={handleUpload} status={uploadStatus} />
